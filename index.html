@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Task & Study Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 backdrop-blur-md bg-white/85 dark:bg-slate-900/85 border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">Daily Routine &amp; Study Dashboard</h1>
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+              06:30 AM – 11:30 PM
+            </span>
+          </div>
+          <p id="currentDateDisplay" class="text-xs text-slate-500 dark:text-slate-400">Loading date...</p>
+        </div>
+      </div>
+
+      <!-- Action Toolbar -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- Live Time Badge -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span id="liveClockDisplay">08:26 AM</span>
+        </div>
+
+        <button id="openAddModalBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Add Block</span>
+        </button>
+
+        <button id="copyScheduleBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition" title="Copy schedule summary to clipboard">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <span class="hidden md:inline">Copy Plan</span>
+        </button>
+
+        <button id="openResetModalBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-600 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 transition" title="Reset schedule to default">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span class="hidden md:inline">Reset</span>
+        </button>
+
+        <button id="themeToggleBtn" type="button" class="p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition" aria-label="Toggle theme">
+          <svg id="themeIconSun" class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="themeIconMoon" class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Current Activity Banner & Day Simulator -->
+    <section class="rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 text-white p-5 sm:p-6 shadow-lg">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/20 backdrop-blur-sm" id="activeBannerBadge">Current Block</span>
+            <span class="text-xs text-indigo-100" id="activeBannerTimeRange">06:30 AM – 08:30 AM</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold tracking-tight" id="activeBannerTitle">Gym &amp; Morning Workout</h2>
+          <p class="text-xs sm:text-sm text-indigo-100 max-w-2xl" id="activeBannerDesc">Strength training, mobility &amp; cardio session to energize the day.</p>
+        </div>
+
+        <!-- Simulator & Day Progress Controls -->
+        <div class="bg-white/10 backdrop-blur-md rounded-xl p-3.5 sm:p-4 border border-white/15 min-w-[270px] sm:min-w-[320px]">
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="font-medium text-indigo-100">Time Preview / Scrubber</span>
+            <div class="flex items-center gap-2">
+              <span id="scrubberTimeLabel" class="font-bold text-white">Live Now</span>
+              <button id="resetLiveTimeBtn" type="button" class="text-[11px] underline text-indigo-200 hover:text-white hidden">Use Live Clock</button>
+            </div>
+          </div>
+          <input id="timeScrubberInput" type="range" min="390" max="1410" step="15" value="505" class="w-full accent-white cursor-pointer h-1.5 bg-white/30 rounded-lg" aria-label="Preview schedule at specific time of day" />
+          <div class="flex justify-between text-[10px] text-indigo-200 mt-1">
+            <span>6:30 AM (Wake)</span>
+            <span>10:00 AM (Study)</span>
+            <span>7:00 PM (Walk)</span>
+            <span>11:30 PM (Sleep)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual 17-Hour Day Proportional Bar -->
+      <div class="mt-5 pt-4 border-t border-white/15">
+        <div class="flex items-center justify-between text-xs text-indigo-100 mb-2">
+          <span>Visual Day Breakdown (6:30 AM – 11:30 PM)</span>
+          <span id="dayElapsedSummary">17h Active Window</span>
+        </div>
+        <div id="visualTimelineBar" class="w-full h-3.5 rounded-full overflow-hidden flex bg-slate-900/40 p-0.5 gap-0.5"></div>
+        <div class="flex flex-wrap items-center gap-4 mt-2.5 text-[11px] text-indigo-100">
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-300"></span>Study Sessions (4)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>Gym &amp; Fresh Air</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-300"></span>Lunch, Dinner &amp; Breaks</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-300"></span>Morning &amp; Sleep Prep</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI Summary Row -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- KPI 1: Study Sessions -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Study Sessions (2–3h each)</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white" id="kpiStudyHours">9.5 hrs</h3>
+          </div>
+          <span class="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </span>
+        </div>
+        <div class="mt-3">
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-slate-500 dark:text-slate-400" id="kpiStudySessionCount">0 / 4 sessions completed</span>
+            <span class="font-semibold text-indigo-600 dark:text-indigo-400" id="kpiStudyRuleBadge">All 2–3h Valid</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div id="kpiStudyProgressBar" class="h-full bg-indigo-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI 2: Overall Task Completion -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Daily Progress</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white" id="kpiCompletionPct">0%</h3>
+          </div>
+          <span class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </span>
+        </div>
+        <div class="mt-3">
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-slate-500 dark:text-slate-400" id="kpiBlocksCompletedText">0 of 11 blocks done</span>
+            <span class="font-medium text-slate-600 dark:text-slate-300" id="kpiSubtasksCompletedText">0/0 tasks</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div id="kpiCompletionBar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI 3: Movement & Fresh Air -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gym &amp; Fresh Air</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white" id="kpiFitnessHours">3.0 hrs</h3>
+          </div>
+          <span class="p-2.5 rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-950/70 dark:text-teal-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </span>
+        </div>
+        <div class="mt-3 space-y-1 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 dark:text-slate-400">Morning Gym:</span>
+            <span class="font-semibold text-slate-700 dark:text-slate-200">06:30 – 08:30 AM</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 dark:text-slate-400">Fresh Air Walk:</span>
+            <span class="font-semibold text-slate-700 dark:text-slate-200">07:00 – 08:00 PM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI 4: Meals & Sleep Window -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Meals &amp; Sleep Target</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">11:30 PM</h3>
+          </div>
+          <span class="p-2.5 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/70 dark:text-amber-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </span>
+        </div>
+        <div class="mt-3 space-y-1 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 dark:text-slate-400">Lunch / Dinner:</span>
+            <span class="font-semibold text-slate-700 dark:text-slate-200">12:30 PM &amp; 08:00 PM</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 dark:text-slate-400">Rest Cycle:</span>
+            <span class="font-semibold text-emerald-600 dark:text-emerald-400">7.0 hrs (until 6:30 AM)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Two-Column Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- Left / Center Column: Interactive Editable Timeline (8 cols) -->
+      <section class="lg:col-span-8 space-y-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <!-- Filter & Search Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Interactive Daily Schedule</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Click any title, time, or task to edit directly, or use the Edit button on any block.</p>
+            </div>
+            <!-- Category Filter Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="categoryFilterContainer">
+              <button type="button" data-filter="all" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition">All</button>
+              <button type="button" data-filter="study" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">Study (4)</button>
+              <button type="button" data-filter="fitness" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">Gym &amp; Air</button>
+              <button type="button" data-filter="meals" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">Meals &amp; Breaks</button>
+              <button type="button" data-filter="routine" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">Routine</button>
+            </div>
+          </div>
+
+          <!-- Quick Action Strip -->
+          <div class="flex flex-wrap items-center justify-between gap-2 py-3 text-xs text-slate-500 dark:text-slate-400">
+            <div class="flex items-center gap-2">
+              <button id="expandAllSubtasksBtn" type="button" class="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition">Expand All Checklists</button>
+              <span>•</span>
+              <button id="collapseAllSubtasksBtn" type="button" class="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition">Collapse All</button>
+              <span>•</span>
+              <button id="markAllPendingBtn" type="button" class="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition">Uncheck All Completed</button>
+            </div>
+            <span id="scheduleValidationStatus" class="text-emerald-600 dark:text-emerald-400 font-medium">✓ 4 study sessions (2–3h each) configured</span>
+          </div>
+
+          <!-- Schedule Timeline List -->
+          <div id="scheduleTimelineContainer" class="space-y-3.5 mt-1"></div>
+        </div>
+      </section>
+
+      <!-- Right Column: Study Session Timer, Study Planner & Time Allocation Chart (4 cols) -->
+      <aside class="lg:col-span-4 space-y-6">
+
+        <!-- Interactive Focus & Study Timer Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Study Focus Timer</h3>
+            </div>
+            <button id="muteAudioBtn" type="button" class="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition" title="Toggle timer completion sound">
+              🔔 Sound On
+            </button>
+          </div>
+
+          <!-- Linked Study Session Selector -->
+          <div class="mb-3">
+            <label for="timerSessionSelect" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Active Study Session</label>
+            <select id="timerSessionSelect" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+          </div>
+
+          <!-- Timer Mode Presets -->
+          <div class="grid grid-cols-3 gap-1.5 mb-4">
+            <button type="button" data-minutes="25" class="timer-preset-btn py-1.5 px-2 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">Pomodoro 25m</button>
+            <button type="button" data-minutes="50" class="timer-preset-btn py-1.5 px-2 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Deep 50m</button>
+            <button type="button" data-minutes="150" class="timer-preset-btn py-1.5 px-2 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Full 2.5h</button>
+          </div>
+
+          <!-- Countdown Display -->
+          <div class="text-center py-5 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 mb-4">
+            <div id="timerDisplay" class="text-4xl sm:text-5xl font-extrabold tracking-tight font-mono text-slate-900 dark:text-white">25:00</div>
+            <p id="timerStatusLabel" class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Ready to start focus block</p>
+          </div>
+
+          <!-- Timer Controls -->
+          <div class="flex items-center gap-2">
+            <button id="timerStartPauseBtn" type="button" class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition">
+              Start Focus
+            </button>
+            <button id="timerResetBtn" type="button" class="py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">
+              Reset
+            </button>
+            <button id="timerCompleteSessionBtn" type="button" class="py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-medium bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 transition" title="Mark selected study session completed">
+              ✓ Done
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Study Sessions Quick-Edit Matrix -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">4 Study Sessions Planner</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Customize subject focus for each 2–3 hr slot</p>
+            </div>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300" id="studyMatrixTotalBadge">9.5h total</span>
+          </div>
+          <div id="studySessionsQuickList" class="space-y-2.5"></div>
+        </div>
+
+        <!-- Time Allocation Doughnut Chart -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">24-Hour Time Allocation</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Live distribution including 7h sleep window</p>
+            </div>
+          </div>
+          <div class="relative h-64 w-full">
+            <canvas id="timeAllocationChart"></canvas>
+          </div>
+          <div id="chartLegendSummary" class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs"></div>
+        </div>
+
+        <!-- Daily Scratchpad & Reflection Notes -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <label for="dailyNotesTextarea" class="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Daily Study Notes &amp; Priorities</label>
+            <span id="notesSavedIndicator" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Auto-saved</span>
+          </div>
+          <textarea id="dailyNotesTextarea" rows="4" placeholder="Jot down key chapters, topics to revise at 9 PM, or gym PRs..." class="w-full rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 p-3 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"></textarea>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+
+  <!-- Add / Edit Schedule Block Modal -->
+  <div id="blockModalOverlay" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <h3 id="blockModalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Edit Schedule Block</h3>
+        <button id="closeBlockModalBtn" type="button" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="blockEditForm" class="space-y-4">
+        <input type="hidden" id="editBlockId" />
+
+        <div>
+          <label for="editBlockTitle" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Activity Title</label>
+          <input id="editBlockTitle" type="text" required placeholder="e.g., Study Session 1: Algorithms & Data Structures" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label for="editBlockStart" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Start Time</label>
+            <input id="editBlockStart" type="time" required class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label for="editBlockEnd" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">End Time</label>
+            <input id="editBlockEnd" type="time" required class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label for="editBlockCategory" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Category</label>
+            <select id="editBlockCategory" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="study">📚 Study Session</option>
+              <option value="fitness">🏋️ Gym &amp; Fresh Air</option>
+              <option value="meals">🍽️ Meals &amp; Break</option>
+              <option value="routine">🌙 Morning / Night Routine</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dynamic Duration Helper -->
+        <div id="modalDurationHelper" class="text-xs px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-medium">
+          Duration: 2.5 hrs (Fits 2–3 hr study session target)
+        </div>
+
+        <div>
+          <label for="editBlockSubject" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Focus Tag / Goal (Optional)</label>
+          <input id="editBlockSubject" type="text" placeholder="e.g., Deep Work, High-Protein Meal, Cardiology" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div>
+          <label for="editBlockNotes" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Description / Notes</label>
+          <textarea id="editBlockNotes" rows="2" placeholder="Details or objectives for this time slot..." class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 gap-2">
+          <button id="deleteBlockBtn" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition">
+            Delete Block
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button id="cancelBlockModalBtn" type="button" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div id="resetModalOverlay" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Reset Schedule to Default?</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">This restores your original 6:30 AM – 11:30 PM plan with 4 study sessions, gym, meals, and 7–8 PM fresh air walk.</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="cancelResetBtn" type="button" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cancel</button>
+        <button id="confirmResetBtn" type="button" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition">Reset Default Plan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
